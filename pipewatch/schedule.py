@@ -59,10 +59,15 @@ class Scheduler:
             elapsed = time.monotonic() - t0
             run += 1
             self.results.append(RunResult(run, success, error, elapsed))
-            if not success and self._config.stop_on_error:
+            if_on_error:
                 break
             self._stop_event.wait(self._config.interval_seconds)
 
     @property
     def is_running(self) -> bool:
         return self._thread is not None and self._thread.is_alive()
+
+    @property
+    def last_result(self) -> Optional[RunResult]:
+        """Return the most recent RunResult, or None if no runs have completed."""
+        return self.results[-1] if self.results else None
