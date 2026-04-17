@@ -45,6 +45,11 @@ class PipelineReport:
             lines.append(f"    - {alert}")
         return "\n".join(lines)
 
+    @property
+    def is_healthy(self) -> bool:
+        """Return True if the pipeline status is HEALTHY with no alerts."""
+        return self.status == PipelineStatus.HEALTHY and self.alert_count == 0
+
 
 class Reporter:
     def __init__(self, collector: MetricCollector, alert_engine: AlertEngine):
@@ -52,6 +57,11 @@ class Reporter:
         self.alert_engine = alert_engine
 
     def generate(self, pipeline_id: str) -> PipelineReport:
+        """Generate a health report for the given pipeline.
+
+        Returns a report with UNKNOWN status if no metrics have been collected
+        for the pipeline yet.
+        """
         metric = self.collector.latest(pipeline_id)
         if metric is None:
             return PipelineReport(
