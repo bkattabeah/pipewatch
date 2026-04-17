@@ -14,6 +14,7 @@ from pipewatch.metrics import PipelineMetric, PipelineStatus
 def make_report(name: str, status: str = "healthy", error_rate: float = 0.0,
                 total: int = 100, failed: int = 0, avg_latency: float = 50.0,
                 sample_count: int = 5):
+    """Create a mock pipeline report with sensible defaults."""
     report = MagicMock()
     report.pipeline_name = name
     report.to_dict.return_value = {
@@ -44,6 +45,20 @@ class TestExportJson:
         reports = [make_report("pipe_a")]
         result = export_json(reports, indent=4)
         assert "    " in result
+
+    def test_all_fields_present(self):
+        """Ensure every field from to_dict appears in the JSON output."""
+        reports = [make_report("pipe_a", status="warning", error_rate=0.1,
+                               total=200, failed=20, avg_latency=75.0, sample_count=10)]
+        result = export_json(reports)
+        parsed = json.loads(result)
+        entry = parsed[0]
+        assert entry["status"] == "warning"
+        assert entry["error_rate"] == 0.1
+        assert entry["total_records"] == 200
+        assert entry["failed_records"] == 20
+        assert entry["avg_latency_ms"] == 75.0
+        assert entry["sample_count"] == 10
 
 
 class TestExportCsv:
