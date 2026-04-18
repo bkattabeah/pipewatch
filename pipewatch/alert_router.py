@@ -23,7 +23,12 @@ class AlertRouter:
             self._suppressed.append(alert)
             return False
         for handler in self.handlers:
-            handler(alert)
+            try:
+                handler(alert)
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Handler {handler!r} failed for alert '{alert.pipeline}': {exc}"
+                ) from exc
         return True
 
     def route_many(self, alerts: List[Alert]) -> dict:
