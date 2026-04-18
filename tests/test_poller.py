@@ -33,15 +33,27 @@ def make_engine() -> AlertEngine:
     return AlertEngine(rules=[rule])
 
 
+def make_poller(
+    collector: MetricCollector,
+    engine: AlertEngine,
+    handlers: list,
+    interval: float = 0.05,
+    max_runs: int = 1,
+    pipelines: list[str] | None = None,
+) -> Poller:
+    """Helper to construct a Poller with common defaults."""
+    cfg = PollerConfig(
+        pipelines=pipelines or ["pipe1"],
+        schedule=ScheduleConfig(interval_seconds=interval, max_runs=max_runs),
+    )
+    return Poller(collector, engine, handlers, cfg)
+
+
 def test_poller_starts_and_stops():
     collector = MetricCollector()
     collector.record(make_metric("pipe1"))
     engine = make_engine()
-    cfg = PollerConfig(
-        pipelines=["pipe1"],
-        schedule=ScheduleConfig(interval_seconds=0.1, max_runs=2),
-    )
-    poller = Poller(collector, engine, [], cfg)
+    poller = make_poller(collector, engine, [], interval=0.1, max_runs=2)
     poller.start()
     time.sleep(0.5)
     poller.stop()
@@ -53,11 +65,7 @@ def test_poller_invokes_handlers():
     collector.record(make_metric("pipe1", failures=8, total=10))
     engine = make_engine()
     received: list[Alert] = []
-    cfg = PollerConfig(
-        pipelines=["pipe1"],
-        schedule=ScheduleConfig(interval_seconds=0.05, max_runs=1),
-    )
-    poller = Poller(collector, engine, [received.append], cfg)
+    poller = make_poller(collector, engine, [received.append], interval=0.05, max_runs=1)
     poller.start()
     time.sleep(0.4)
     poller.stop()
@@ -68,11 +76,10 @@ def test_poller_skips_missing_pipeline():
     collector = MetricCollector()
     engine = make_engine()
     received: list = []
-    cfg = PollerConfig(
-        pipelines=["nonexistent"],
-        schedule=ScheduleConfig(interval_seconds=0.05, max_runs=2),
+    poller = make_poller(
+        collector, engine, [received.append],
+        interval=0.05, max_runs=2, pipelines=["nonexistent"],
     )
-    poller = Poller(collector, engine, [received.append], cfg)
     poller.start()
     time.sleep(0.4)
     poller.stop()
