@@ -37,6 +37,17 @@ class MetricCollector:
     def pipeline_ids(self) -> List[str]:
         return list(self._store.keys())
 
+    def clear(self, pipeline_id: str) -> bool:
+        """Remove all stored metrics for a given pipeline.
+
+        Returns True if the pipeline existed and was cleared, False if it was
+        not found.
+        """
+        if pipeline_id in self._store:
+            del self._store[pipeline_id]
+            return True
+        return False
+
     def summary(self, pipeline_id: str) -> Optional[dict]:
         metrics = self.history(pipeline_id)
         if not metrics:
