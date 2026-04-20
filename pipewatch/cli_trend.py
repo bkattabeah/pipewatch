@@ -12,6 +12,16 @@ def _get_collector() -> MetricCollector:
     return _collector
 
 
+def _print_trend_result(result) -> None:
+    """Print a TrendResult to stdout in human-readable format."""
+    click.echo(f"Pipeline:   {result.pipeline_id}")
+    click.echo(f"Samples:    {result.sample_count}")
+    click.echo(f"Avg error:  {result.avg_error_rate:.2%}")
+    click.echo(f"Min error:  {result.min_error_rate:.2%}")
+    click.echo(f"Max error:  {result.max_error_rate:.2%}")
+    click.echo(f"Trend:      {result.trend_direction} (slope={result.slope:.6f})")
+
+
 @click.group()
 def trend():
     """Trend analysis commands."""
@@ -28,12 +38,7 @@ def cmd_trend_show(pipeline_id: str, limit: int):
     if result is None:
         click.echo(f"No data for pipeline '{pipeline_id}'.")
         return
-    click.echo(f"Pipeline:   {result.pipeline_id}")
-    click.echo(f"Samples:    {result.sample_count}")
-    click.echo(f"Avg error:  {result.avg_error_rate:.2%}")
-    click.echo(f"Min error:  {result.min_error_rate:.2%}")
-    click.echo(f"Max error:  {result.max_error_rate:.2%}")
-    click.echo(f"Trend:      {result.trend_direction} (slope={result.slope:.6f})")
+    _print_trend_result(result)
 
 
 @trend.command("json")
