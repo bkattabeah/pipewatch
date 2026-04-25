@@ -32,6 +32,13 @@ class TestAlertDeduplicator:
         later = self.now + timedelta(seconds=61)
         assert not self.d.is_duplicate(alert, now=later)
 
+    def test_alert_exactly_at_window_boundary_is_duplicate(self):
+        """An alert at exactly window_seconds should still be considered a duplicate."""
+        alert = make_alert()
+        self.d.record(alert, now=self.now)
+        at_boundary = self.now + timedelta(seconds=60)
+        assert self.d.is_duplicate(alert, now=at_boundary)
+
     def test_different_pipelines_not_duplicate(self):
         a1 = make_alert(pipeline="etl")
         a2 = make_alert(pipeline="ml")
